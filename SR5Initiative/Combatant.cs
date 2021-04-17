@@ -23,6 +23,10 @@ namespace SR5Initiative
 
         public void AddInitiative(int count)
         {
+            if (count < 1)
+            {
+                throw new ArgumentOutOfRangeException("Initiative count added must be greater than zero!");
+            }
             InitiativeScore += count;
         }
 
