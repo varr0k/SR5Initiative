@@ -8,7 +8,7 @@ namespace SR5Initiative
     public class Combatant
     {
         public Guid Id { get; set; }
-        public string DisplayName { get; set; }
+        public string Name { get; set; }
         public int InitiativeScore { get; set; }
         public int InitiativeModifier { get; set; }
         public bool IsPlayerCharacter { get; set; }
@@ -16,8 +16,10 @@ namespace SR5Initiative
         public int Edge { get; set; }
         public int Reaction { get; set; }
         public int Intuition { get; set; }
+        public int InitiativeDice { get; set; }
         public bool IsActive() => InitiativeScore > 0;
         public int NumberOfPhases() => IsActive() ? (InitiativeScore / 10) + 1 : 0;
+        public string DisplayName() => $"<b>{Name}</b> - {InitiativeScore} (E{Edge}/R{Reaction}/I{Intuition})";
 
         public void AddInitiative(int count)
         {
@@ -31,6 +33,21 @@ namespace SR5Initiative
             {
                 InitiativeScore = 0;
             }
+        }
+
+        public int RollInitiative()
+        {
+            int initiative = Reaction + Intuition;
+            Random random = new();
+
+            for (int i = 0; i < InitiativeDice; i++)
+            {
+                int diceroll = random.Next(1, 7);
+                Console.Write($"diceroll: {diceroll}");
+                initiative += diceroll;
+            }
+
+            return initiative;
         }
 
         public string CssClass()
@@ -51,7 +68,6 @@ namespace SR5Initiative
                     else
                     {
                     }
-
                 }
             }
             else
@@ -61,5 +77,6 @@ namespace SR5Initiative
 
             return cssClass;
         }
+
     }
 }

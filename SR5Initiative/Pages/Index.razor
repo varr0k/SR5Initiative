@@ -11,7 +11,7 @@
                     <li class="@combatant.CssClass()" id="@combatant.Id">
                         <div class="row">
                             <div class="col-md-8">
-                                <b>@combatant.DisplayName</b> - @combatant.InitiativeScore (@combatant.Edge @combatant.Reaction @combatant.Intuition)
+                                <p>@((MarkupString)combatant.DisplayName())</p>
                             </div>
                             <div class="col-md-4">
                                 <div class="input-group">
@@ -45,7 +45,7 @@
 <div class="row mt-2">
     <div class="col">
         <button class="btn btn-primary" @onclick="AdvancePhase">Next Phase</button>
-        @*<button class="btn btn-primary" @onclick="AdvanceTurn">Next Turn</button>*@
+        <button class="btn btn-primary" @onclick="RerollInitiative">Reroll</button>
     </div>
 </div>
 <div class="row mt-4">
@@ -60,7 +60,7 @@
                     </div>
                     <div class="form-group col-md-4">
                         <label for="newCombatantName">Initiative Score</label>
-                        <input type="number" class="form-control" placeholder="0" id="newCombatantName" @bind="newCombatantInitiative" />
+                        <input type="number" class="form-control" placeholder="-1" id="newCombatantName" @bind="newCombatantInitiative" />
                     </div>
                 </div>
                 <div class="form-group">
@@ -76,27 +76,25 @@
                 <div class="form-row">
                     <div class="form-group col">
                         <label for="newCombatantEdge">Edge</label>
-                        <input type="number" class="form-control" placeholder="0" id="newCombatantEdge" @bind="newCombatantEdge" />
-
+                        <input type="number" class="form-control" placeholder="1" id="newCombatantEdge" @bind="newCombatantEdge" />
                     </div>
                     <div class="form-group col">
                         <label for="newCombatantReaction">Reaction</label>
-                        <input type="number" class="form-control" placeholder="0" id="newCombatantReaction" @bind="newCombatantReaction" />
-
+                        <input type="number" class="form-control" placeholder="1" id="newCombatantReaction" @bind="newCombatantReaction" />
                     </div>
                     <div class="form-group col">
                         <label for="newCombatantIntuition">Intuition</label>
-                        <input type="number" class="form-control" placeholder="0" id="newCombatantIntuition" @bind="newCombatantIntuition" />
-
+                        <input type="number" class="form-control" placeholder="1" id="newCombatantIntuition" @bind="newCombatantIntuition" />
+                    </div>
+                    <div class="form-group col">
+                        <label for="newCombatantDice">Initiative Dice</label>
+                        <input type="number" class="form-control" placeholder="1" id="newCombatantDice" @bind="newCombatantDice" />
                     </div>
                 </div>
                 <button class="btn btn-primary" @onclick="AddCombatant">Add</button>
-
             </div>
-
         </div>
-
-    </div> 
+    </div>
 </div>
 
 
@@ -105,12 +103,13 @@
     private int currentTurn = 0;
     private int currentPhase = 0;
     private string newCombatantName;
-    private int newCombatantInitiative;
+    private int newCombatantInitiative = -1;
     private bool newCombatantIsPlayer;
     private bool newCombatantIsHostile;
-    private int newCombatantEdge;
-    private int newCombatantReaction;
-    private int newCombatantIntuition;
+    private int newCombatantEdge = 1;
+    private int newCombatantReaction = 1;
+    private int newCombatantIntuition = 1;
+    private int newCombatantDice = 1;
     private int initiativeModify;
 
 
@@ -119,23 +118,37 @@
     /// </summary>
     private void AddCombatant()
     {
-        combatants.Add(new Combatant
+        var combatant = new Combatant
         {
             Id = Guid.NewGuid(),
-            DisplayName = newCombatantName,
+            Name = newCombatantName,
             InitiativeScore = newCombatantInitiative,
             IsPlayerCharacter = newCombatantIsPlayer,
             IsHostile = newCombatantIsHostile,
             Edge = newCombatantEdge,
             Reaction = newCombatantReaction,
-            Intuition = newCombatantIntuition
-        });
+            Intuition = newCombatantIntuition,
+            InitiativeDice = newCombatantDice
+        };
+
+        if (!combatant.IsPlayerCharacter && combatant.InitiativeScore < 0)
+        {
+            combatant.InitiativeScore = combatant.RollInitiative();
+        }
+
+        combatants.Add(combatant);
+        SortCombatants();
+    }
+
+    private void SortCombatants()
+    {
         combatants = combatants
             .OrderByDescending(c => c.InitiativeScore)
             .ThenByDescending(c => c.Edge)
             .ThenByDescending(c => c.Reaction)
             .ThenByDescending(c => c.Intuition)
             .ToList();
+
     }
 
     private void AdvancePhase()
@@ -147,10 +160,20 @@
 
     }
 
-    private void AdvanceTurn()
+    private void RerollInitiative()
     {
-        throw new NotImplementedException();
-
+        foreach (var combatant in combatants)
+        {
+            if (combatant.IsPlayerCharacter)
+            {
+                combatant.InitiativeScore = 0;
+            }
+            else
+            {
+                combatant.InitiativeScore = combatant.RollInitiative();
+            }
+        }
+        SortCombatants();
     }
 
     private void ModifyInitiative(Guid id, bool subtract)
@@ -164,7 +187,7 @@
         {
             combatant.AddInitiative(combatant.InitiativeModifier);
         }
-
+        SortCombatants();
     }
 
     private void RemoveCombatant(Guid id)
