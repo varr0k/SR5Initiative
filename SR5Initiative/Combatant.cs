@@ -13,6 +13,9 @@ namespace SR5Initiative
         public int InitiativeModifier { get; set; }
         public bool IsPlayerCharacter { get; set; }
         public bool IsHostile { get; set; }
+        public int Edge { get; set; }
+        public int Reaction { get; set; }
+        public int Intuition { get; set; }
         public bool IsActive() => InitiativeScore > 0;
         public int NumberOfPhases() => IsActive() ? (InitiativeScore / 10) + 1 : 0;
 
