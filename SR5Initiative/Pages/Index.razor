@@ -6,12 +6,12 @@
         <ul class="list-group">
             @if (combatants.Any())
             {
-                @foreach (var combatant in combatants.OrderByDescending(c => c.InitiativeScore))
+                @foreach (var combatant in combatants)
                 {
                     <li class="@combatant.CssClass()" id="@combatant.Id">
                         <div class="row">
                             <div class="col-md-8">
-                                @combatant.DisplayName - @combatant.InitiativeScore
+                                <b>@combatant.DisplayName</b> - @combatant.InitiativeScore (@combatant.Edge @combatant.Reaction @combatant.Intuition)
                             </div>
                             <div class="col-md-4">
                                 <div class="input-group">
@@ -72,7 +72,23 @@
                         <input type="checkbox" class="form-check-input" id="newCombatantIsHostile" @bind="newCombatantIsHostile" />
                         <label class="form-check-label" for="newCombatantIsHostile">Hostile</label>
                     </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col">
+                        <label for="newCombatantEdge">Edge</label>
+                        <input type="number" class="form-control" placeholder="0" id="newCombatantEdge" @bind="newCombatantEdge" />
 
+                    </div>
+                    <div class="form-group col">
+                        <label for="newCombatantReaction">Reaction</label>
+                        <input type="number" class="form-control" placeholder="0" id="newCombatantReaction" @bind="newCombatantReaction" />
+
+                    </div>
+                    <div class="form-group col">
+                        <label for="newCombatantIntuition">Intuition</label>
+                        <input type="number" class="form-control" placeholder="0" id="newCombatantIntuition" @bind="newCombatantIntuition" />
+
+                    </div>
                 </div>
                 <button class="btn btn-primary" @onclick="AddCombatant">Add</button>
 
@@ -80,8 +96,7 @@
 
         </div>
 
-    </div>
-
+    </div> 
 </div>
 
 
@@ -93,9 +108,15 @@
     private int newCombatantInitiative;
     private bool newCombatantIsPlayer;
     private bool newCombatantIsHostile;
+    private int newCombatantEdge;
+    private int newCombatantReaction;
+    private int newCombatantIntuition;
     private int initiativeModify;
 
 
+    /// <summary>
+    /// Add a combatant to the initiative tracker, keeping the list in the correct order.
+    /// </summary>
     private void AddCombatant()
     {
         combatants.Add(new Combatant
@@ -104,9 +125,17 @@
             DisplayName = newCombatantName,
             InitiativeScore = newCombatantInitiative,
             IsPlayerCharacter = newCombatantIsPlayer,
-            IsHostile = newCombatantIsHostile
+            IsHostile = newCombatantIsHostile,
+            Edge = newCombatantEdge,
+            Reaction = newCombatantReaction,
+            Intuition = newCombatantIntuition
         });
-        combatants.OrderBy(c => c.InitiativeScore);
+        combatants = combatants
+            .OrderByDescending(c => c.InitiativeScore)
+            .ThenByDescending(c => c.Edge)
+            .ThenByDescending(c => c.Reaction)
+            .ThenByDescending(c => c.Intuition)
+            .ToList();
     }
 
     private void AdvancePhase()
